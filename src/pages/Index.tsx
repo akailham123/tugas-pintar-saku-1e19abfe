@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, BarChart3, List } from "lucide-react";
+import { BookOpen, BarChart3, List } from "lucide-react";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskModal } from "@/components/TaskModal";
 import { SubjectCard } from "@/components/SubjectCard";
-import { AddSubjectModal } from "@/components/AddSubjectModal";
 import { AnalyticsCard } from "@/components/AnalyticsCard";
 
 interface Task {
@@ -32,30 +31,57 @@ const Index = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [isAddSubjectModalOpen, setIsAddSubjectModalOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
+  const [followedSubjects, setFollowedSubjects] = useState<string[]>([]);
 
-  // Sample data
+  // Sample data - mata kuliah yang tersedia di universitas
   useEffect(() => {
-    setSubjects([
+    setAvailableSubjects([
       {
         id: "1",
         name: "Pemrograman Web",
         code: "TIF-301",
         semester: "Semester 5",
-        taskCount: 3,
-        completedTasks: 1
+        taskCount: 0,
+        completedTasks: 0
       },
       {
         id: "2", 
         name: "Basis Data",
         code: "TIF-302",
         semester: "Semester 5",
-        taskCount: 2,
-        completedTasks: 2
+        taskCount: 0,
+        completedTasks: 0
+      },
+      {
+        id: "3",
+        name: "Algoritma dan Struktur Data",
+        code: "TIF-201",
+        semester: "Semester 3",
+        taskCount: 0,
+        completedTasks: 0
+      },
+      {
+        id: "4",
+        name: "Sistem Operasi",
+        code: "TIF-401",
+        semester: "Semester 7",
+        taskCount: 0,
+        completedTasks: 0
+      },
+      {
+        id: "5",
+        name: "Jaringan Komputer",
+        code: "TIF-402",
+        semester: "Semester 7",
+        taskCount: 0,
+        completedTasks: 0
       }
     ]);
+
+    // User sudah follow beberapa mata kuliah
+    setFollowedSubjects(["1", "2"]);
 
     setTasks([
       {
@@ -110,26 +136,38 @@ const Index = () => {
     ));
   };
 
-  const handleAddSubject = (subjectData: { name: string; code: string; semester: string }) => {
-    const newSubject: Subject = {
-      id: Date.now().toString(),
-      ...subjectData,
-      taskCount: 0,
-      completedTasks: 0
-    };
-    setSubjects([...subjects, newSubject]);
+  const handleToggleFollow = (subjectId: string) => {
+    setFollowedSubjects(prev => 
+      prev.includes(subjectId) 
+        ? prev.filter(id => id !== subjectId)
+        : [...prev, subjectId]
+    );
   };
 
+  // Mata kuliah yang diikuti user
+  const mySubjects = availableSubjects.filter(subject => 
+    followedSubjects.includes(subject.id)
+  ).map(subject => {
+    const subjectTasks = tasks.filter(task => task.subject === subject.name);
+    return {
+      ...subject,
+      taskCount: subjectTasks.length,
+      completedTasks: subjectTasks.filter(task => task.completed).length
+    };
+  });
+
+  // Filter tugas hanya dari mata kuliah yang diikuti
+  const mySubjectNames = mySubjects.map(subject => subject.name);
   const filteredTasks = selectedSubject 
     ? tasks.filter(task => task.subject === selectedSubject.name)
-    : tasks;
+    : tasks.filter(task => mySubjectNames.includes(task.subject));
 
   const analyticsData = {
-    totalTasks: tasks.length,
-    completedTasks: tasks.filter(task => task.completed).length,
-    totalSubjects: subjects.length,
-    overdueTasks: tasks.filter(task => new Date() > task.deadline && !task.completed).length,
-    subjectAnalysis: subjects.map(subject => ({
+    totalTasks: filteredTasks.length,
+    completedTasks: filteredTasks.filter(task => task.completed).length,
+    totalSubjects: mySubjects.length,
+    overdueTasks: filteredTasks.filter(task => new Date() > task.deadline && !task.completed).length,
+    subjectAnalysis: mySubjects.map(subject => ({
       subject: subject.name,
       completion: tasks.filter(task => task.subject === subject.name && task.completed).length,
       total: tasks.filter(task => task.subject === subject.name).length
@@ -203,35 +241,47 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="subjects" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Mata Kuliah Terdaftar</h2>
-              <Button onClick={() => setIsAddSubjectModalOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Daftarkan Mata Kuliah
-              </Button>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {subjects.map((subject) => (
-                <SubjectCard
-                  key={subject.id}
-                  subject={subject}
-                  onClick={handleSubjectClick}
-                />
-              ))}
-            </div>
-
-            {subjects.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 mb-4">
-                  Belum ada mata kuliah yang terdaftar
-                </p>
-                <Button onClick={() => setIsAddSubjectModalOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Daftarkan Mata Kuliah Pertama
-                </Button>
+            <div className="space-y-6">
+              {/* Mata Kuliah yang Diikuti */}
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Mata Kuliah yang Diikuti</h2>
+                {mySubjects.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {mySubjects.map((subject) => (
+                      <SubjectCard
+                        key={subject.id}
+                        subject={subject}
+                        onClick={handleSubjectClick}
+                        isFollowed={true}
+                        onToggleFollow={handleToggleFollow}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                    <p className="text-gray-500">
+                      Belum ada mata kuliah yang diikuti. Pilih mata kuliah di bawah ini.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Semua Mata Kuliah yang Tersedia */}
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Mata Kuliah Tersedia</h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {availableSubjects.map((subject) => (
+                    <SubjectCard
+                      key={subject.id}
+                      subject={subject}
+                      onClick={() => {}} // Disable click for available subjects
+                      isFollowed={followedSubjects.includes(subject.id)}
+                      onToggleFollow={handleToggleFollow}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
@@ -250,11 +300,6 @@ const Index = () => {
           onUpdateDeadline={handleUpdateDeadline}
         />
 
-        <AddSubjectModal
-          open={isAddSubjectModalOpen}
-          onClose={() => setIsAddSubjectModalOpen(false)}
-          onAdd={handleAddSubject}
-        />
       </div>
     </div>
   );
