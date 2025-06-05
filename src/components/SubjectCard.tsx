@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, UserPlus, UserMinus } from "lucide-react";
+import { BookOpen, UserPlus, UserMinus, Plus } from "lucide-react";
 
 interface Subject {
   id: string;
@@ -17,9 +17,10 @@ interface SubjectCardProps {
   onClick: (subject: Subject) => void;
   isFollowed?: boolean;
   onToggleFollow?: (subjectId: string) => void;
+  onAddTask?: (subjectName: string) => void;
 }
 
-export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow }: SubjectCardProps) => {
+export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow, onAddTask }: SubjectCardProps) => {
   const completionPercentage = subject.taskCount > 0 
     ? Math.round((subject.completedTasks / subject.taskCount) * 100) 
     : 0;
@@ -34,6 +35,13 @@ export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow }: Su
     e.stopPropagation();
     if (onToggleFollow) {
       onToggleFollow(subject.id);
+    }
+  };
+
+  const handleAddTask = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onAddTask) {
+      onAddTask(subject.name);
     }
   };
 
@@ -96,6 +104,18 @@ export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow }: Su
               <p className="text-xs text-gray-600">
                 {subject.completedTasks} dari {subject.taskCount} tugas selesai
               </p>
+              
+              {onAddTask && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAddTask}
+                  className="w-full mt-2"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Tambah Tugas
+                </Button>
+              )}
             </div>
           )}
         </div>

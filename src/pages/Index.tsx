@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { BookOpen, BarChart3, List } from "lucide-react";
+import { BookOpen, BarChart3, List, Plus, UserPlus } from "lucide-react";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskModal } from "@/components/TaskModal";
 import { SubjectCard } from "@/components/SubjectCard";
 import { AnalyticsCard } from "@/components/AnalyticsCard";
+import { AddTaskModal } from "@/components/AddTaskModal";
 
 interface Task {
   id: string;
@@ -34,6 +35,9 @@ const Index = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
   const [followedSubjects, setFollowedSubjects] = useState<string[]>([]);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [selectedSubjectForTask, setSelectedSubjectForTask] = useState<string>("");
+  const [showAvailableSubjects, setShowAvailableSubjects] = useState(false);
 
   // Sample data - mata kuliah yang tersedia di universitas
   useEffect(() => {
@@ -144,6 +148,26 @@ const Index = () => {
     );
   };
 
+  const handleAddTask = (taskData: {
+    title: string;
+    description: string;
+    deadline: Date;
+    type: string;
+    subject: string;
+  }) => {
+    const newTask: Task = {
+      id: Date.now().toString(),
+      ...taskData,
+      completed: false
+    };
+    setTasks(prev => [...prev, newTask]);
+  };
+
+  const handleOpenAddTaskModal = (subjectName?: string) => {
+    setSelectedSubjectForTask(subjectName || "");
+    setIsAddTaskModalOpen(true);
+  };
+
   // Mata kuliah yang diikuti user
   const mySubjects = availableSubjects.filter(subject => 
     followedSubjects.includes(subject.id)
@@ -207,14 +231,20 @@ const Index = () => {
               <h2 className="text-xl font-semibold">
                 {selectedSubject ? `Tugas ${selectedSubject.name}` : "Semua Tugas"}
               </h2>
-              {selectedSubject && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelectedSubject(null)}
-                >
-                  Lihat Semua Tugas
+              <div className="flex gap-2">
+                <Button onClick={() => handleOpenAddTaskModal()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tambah Tugas
                 </Button>
-              )}
+                {selectedSubject && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedSubject(null)}
+                  >
+                    Lihat Semua Tugas
+                  </Button>
+                )}
+              </div>
             </div>
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -254,6 +284,7 @@ const Index = () => {
                         onClick={handleSubjectClick}
                         isFollowed={true}
                         onToggleFollow={handleToggleFollow}
+                        onAddTask={handleOpenAddTaskModal}
                       />
                     ))}
                   </div>
@@ -266,20 +297,32 @@ const Index = () => {
                 )}
               </div>
 
-              {/* Semua Mata Kuliah yang Tersedia */}
+              {/* Tombol Daftar Mata Kuliah */}
               <div>
-                <h2 className="text-xl font-semibold mb-4">Mata Kuliah Tersedia</h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {availableSubjects.map((subject) => (
-                    <SubjectCard
-                      key={subject.id}
-                      subject={subject}
-                      onClick={() => {}} // Disable click for available subjects
-                      isFollowed={followedSubjects.includes(subject.id)}
-                      onToggleFollow={handleToggleFollow}
-                    />
-                  ))}
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Mata Kuliah Tersedia</h2>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowAvailableSubjects(!showAvailableSubjects)}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    {showAvailableSubjects ? "Sembunyikan" : "Daftar Mata Kuliah"}
+                  </Button>
                 </div>
+                
+                {showAvailableSubjects && (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {availableSubjects.map((subject) => (
+                      <SubjectCard
+                        key={subject.id}
+                        subject={subject}
+                        onClick={() => {}} // Disable click for available subjects
+                        isFollowed={followedSubjects.includes(subject.id)}
+                        onToggleFollow={handleToggleFollow}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -298,6 +341,17 @@ const Index = () => {
             setSelectedTask(null);
           }}
           onUpdateDeadline={handleUpdateDeadline}
+        />
+
+        <AddTaskModal
+          open={isAddTaskModalOpen}
+          onClose={() => {
+            setIsAddTaskModalOpen(false);
+            setSelectedSubjectForTask("");
+          }}
+          onAddTask={handleAddTask}
+          followedSubjects={mySubjects}
+          preSelectedSubject={selectedSubjectForTask}
         />
 
       </div>
