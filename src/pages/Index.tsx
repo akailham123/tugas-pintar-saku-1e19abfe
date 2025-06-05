@@ -184,13 +184,19 @@ const Index = () => {
   const mySubjectNames = mySubjects.map(subject => subject.name);
   const filteredTasks = selectedSubject 
     ? tasks.filter(task => task.subject === selectedSubject.name)
-    : tasks.filter(task => mySubjectNames.includes(task.subject));
+    : tasks.filter(task => mySubjectNames.includes(task.subject) && !task.completed);
 
+  // Urutkan berdasarkan deadline
+  const sortedTasks = filteredTasks.sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
+
+  // Data analitik menggunakan semua tugas dari mata kuliah yang diikuti
+  const allMyTasks = tasks.filter(task => mySubjectNames.includes(task.subject));
+  
   const analyticsData = {
-    totalTasks: filteredTasks.length,
-    completedTasks: filteredTasks.filter(task => task.completed).length,
+    totalTasks: allMyTasks.length,
+    completedTasks: allMyTasks.filter(task => task.completed).length,
     totalSubjects: mySubjects.length,
-    overdueTasks: filteredTasks.filter(task => new Date() > task.deadline && !task.completed).length,
+    overdueTasks: allMyTasks.filter(task => new Date() > task.deadline && !task.completed).length,
     subjectAnalysis: mySubjects.map(subject => ({
       subject: subject.name,
       completion: tasks.filter(task => task.subject === subject.name && task.completed).length,
@@ -248,7 +254,7 @@ const Index = () => {
             </div>
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredTasks.map((task) => (
+              {sortedTasks.map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}
@@ -258,7 +264,7 @@ const Index = () => {
               ))}
             </div>
 
-            {filteredTasks.length === 0 && (
+            {sortedTasks.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-500">
                   {selectedSubject 
