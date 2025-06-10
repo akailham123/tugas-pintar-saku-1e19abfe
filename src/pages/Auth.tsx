@@ -120,9 +120,6 @@ const Auth = () => {
                   Masuk
                 </Button>
               </form>
-              <div className="mt-4 text-center text-sm text-gray-600">
-                <p>Admin: admin@senjati.com / admin123</p>
-              </div>
             </TabsContent>
             
             <TabsContent value="signup">
