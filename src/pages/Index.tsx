@@ -454,11 +454,11 @@ const Index = () => {
   // Get available semesters for filter
   const availableSemesters = [...new Set(allSubjects.map(s => s.semester))].sort();
 
-  // Filter tugas hanya dari mata kuliah yang diikuti
+  // Filter tugas berdasarkan mata kuliah yang dipilih atau semua tugas yang belum selesai
   const mySubjectIds = mySubjects.map(subject => subject.id);
   const filteredTasks = selectedSubject 
     ? tasks.filter(task => task.subject_id === selectedSubject.id)
-    : tasks.filter(task => mySubjectIds.includes(task.subject_id) && !task.completed);
+    : tasks.filter(task => !task.completed);
 
   // Urutkan berdasarkan deadline
   const sortedTasks = filteredTasks.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
