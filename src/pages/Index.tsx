@@ -93,7 +93,7 @@ const Index = () => {
       if (userSubjectsError) throw userSubjectsError;
       setFollowedSubjects(userSubjectsData?.map(us => us.subject_id) || []);
 
-      // Load tasks (admin sees all, users see tasks created by admin OR their own)
+      // Load tasks (admin sees all, users see tasks from subjects they follow)
       let tasksQuery = supabase
         .from('tasks')
         .select(`
@@ -112,8 +112,9 @@ const Index = () => {
         if (subjectIds.length > 0) {
           tasksQuery = tasksQuery.in('subject_id', subjectIds);
         } else {
-          // If user doesn't follow any subjects, show empty result
-          tasksQuery = tasksQuery.eq('id', 'non-existent-id');
+          // If user doesn't follow any subjects, return empty array
+          setTasks([]);
+          return;
         }
       }
 
