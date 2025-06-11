@@ -93,8 +93,8 @@ const Index = () => {
       if (userSubjectsError) throw userSubjectsError;
       setFollowedSubjects(userSubjectsData?.map(us => us.subject_id) || []);
 
-      // Load tasks (admin sees all, users see tasks from subjects they follow)
-      let tasksQuery = supabase
+      // Load tasks - RLS policies will automatically filter based on user permissions
+      const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select(`
           *,
@@ -104,21 +104,7 @@ const Index = () => {
             code,
             semester
           )
-        `);
-
-      if (!isAdmin) {
-        // Users can see tasks from subjects they follow 
-        const subjectIds = userSubjectsData?.map(us => us.subject_id) || [];
-        if (subjectIds.length > 0) {
-          tasksQuery = tasksQuery.in('subject_id', subjectIds);
-        } else {
-          // If user doesn't follow any subjects, return empty array
-          setTasks([]);
-          return;
-        }
-      }
-
-      const { data: tasksData, error: tasksError } = await tasksQuery
+        `)
         .order('deadline', { ascending: true });
 
       if (tasksError) throw tasksError;
@@ -218,6 +204,7 @@ const Index = () => {
         if (error) throw error;
         
         setFollowedSubjects(prev => prev.filter(id => id !== subjectId));
+        await loadData(); // Reload tasks to reflect changes
         toast({
           title: "Berhasil",
           description: "Berhenti mengikuti mata kuliah",
@@ -234,6 +221,7 @@ const Index = () => {
         if (error) throw error;
         
         setFollowedSubjects(prev => [...prev, subjectId]);
+        await loadData(); // Reload tasks to reflect changes
         toast({
           title: "Berhasil",
           description: "Mulai mengikuti mata kuliah",
