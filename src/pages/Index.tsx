@@ -93,7 +93,7 @@ const Index = () => {
       if (userSubjectsError) throw userSubjectsError;
       setFollowedSubjects(userSubjectsData?.map(us => us.subject_id) || []);
 
-      // Load tasks (admin sees all, users see only their own)
+      // Load tasks (admin sees all, users see tasks created by admin OR their own)
       let tasksQuery = supabase
         .from('tasks')
         .select(`
@@ -107,7 +107,14 @@ const Index = () => {
         `);
 
       if (!isAdmin) {
-        tasksQuery = tasksQuery.eq('user_id', profile?.id);
+        // Users can see tasks from subjects they follow 
+        const subjectIds = userSubjectsData?.map(us => us.subject_id) || [];
+        if (subjectIds.length > 0) {
+          tasksQuery = tasksQuery.in('subject_id', subjectIds);
+        } else {
+          // If user doesn't follow any subjects, show empty result
+          tasksQuery = tasksQuery.eq('id', 'non-existent-id');
+        }
       }
 
       const { data: tasksData, error: tasksError } = await tasksQuery
@@ -249,7 +256,11 @@ const Index = () => {
     subject: string;
   }) => {
     try {
-      const subject = mySubjects.find(s => s.name === taskData.subject);
+      // For admin, search in all subjects. For user, search in followed subjects
+      const subject = isAdmin 
+        ? allSubjects.find(s => s.name === taskData.subject)
+        : mySubjects.find(s => s.name === taskData.subject);
+      
       if (!subject) return;
 
       const { data, error } = await supabase
@@ -260,7 +271,7 @@ const Index = () => {
           deadline: taskData.deadline.toISOString(),
           type: taskData.type,
           subject_id: subject.id,
-          user_id: profile?.id,
+          user_id: profile?.id, // For now, assign to creator
           created_by: profile?.id
         })
         .select('*, subjects:subject_id(*)')
@@ -359,6 +370,35 @@ const Index = () => {
       toast({
         title: "Error",
         description: "Gagal menambahkan mata kuliah",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteSubject = async (subjectId: string) => {
+    try {
+      if (!window.confirm("Yakin ingin menghapus mata kuliah ini? Semua tugas terkait akan terhapus.")) {
+        return;
+      }
+
+      const { error } = await supabase
+        .from('subjects')
+        .delete()
+        .eq('id', subjectId);
+
+      if (error) throw error;
+
+      setAllSubjects(prev => prev.filter(s => s.id !== subjectId));
+      setFollowedSubjects(prev => prev.filter(id => id !== subjectId));
+      toast({
+        title: "Berhasil",
+        description: "Mata kuliah berhasil dihapus",
+      });
+    } catch (error) {
+      console.error('Error deleting subject:', error);
+      toast({
+        title: "Error",
+        description: "Gagal menghapus mata kuliah",
         variant: "destructive",
       });
     }
@@ -530,16 +570,17 @@ const Index = () => {
                 <h2 className="text-xl font-semibold mb-4">Mata Kuliah yang Diikuti</h2>
                 {mySubjects.length > 0 ? (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {mySubjects.map((subject) => (
-                      <SubjectCard
-                        key={subject.id}
-                        subject={subject}
-                        onClick={handleSubjectClick}
-                        isFollowed={true}
-                        onToggleFollow={handleToggleFollow}
-                        onAddTask={handleOpenAddTaskModal}
-                      />
-                    ))}
+                     {mySubjects.map((subject) => (
+                       <SubjectCard
+                         key={subject.id}
+                         subject={subject}
+                         onClick={handleSubjectClick}
+                         isFollowed={true}
+                         onToggleFollow={handleToggleFollow}
+                         onAddTask={isAdmin ? handleOpenAddTaskModal : undefined}
+                         onDeleteSubject={isAdmin ? handleDeleteSubject : undefined}
+                       />
+                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
@@ -659,7 +700,7 @@ const Index = () => {
             setSelectedSubjectForTask("");
           }}
           onAddTask={handleAddTask}
-          followedSubjects={mySubjects}
+          followedSubjects={isAdmin ? allSubjects : mySubjects}
           preSelectedSubject={selectedSubjectForTask}
         />
 

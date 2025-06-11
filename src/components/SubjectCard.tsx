@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, UserPlus, UserMinus, Plus } from "lucide-react";
+import { BookOpen, UserPlus, UserMinus, Plus, Trash2 } from "lucide-react";
 
 interface Subject {
   id: string;
@@ -18,9 +18,10 @@ interface SubjectCardProps {
   isFollowed?: boolean;
   onToggleFollow?: (subjectId: string) => void;
   onAddTask?: (subjectName: string) => void;
+  onDeleteSubject?: (subjectId: string) => void;
 }
 
-export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow, onAddTask }: SubjectCardProps) => {
+export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow, onAddTask, onDeleteSubject }: SubjectCardProps) => {
   const completionPercentage = subject.taskCount > 0 
     ? Math.round((subject.completedTasks / subject.taskCount) * 100) 
     : 0;
@@ -42,6 +43,13 @@ export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow, onAd
     e.stopPropagation();
     if (onAddTask) {
       onAddTask(subject.name);
+    }
+  };
+
+  const handleDeleteSubject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDeleteSubject) {
+      onDeleteSubject(subject.id);
     }
   };
 
@@ -105,17 +113,29 @@ export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow, onAd
                 {subject.completedTasks} dari {subject.taskCount} tugas selesai
               </p>
               
-              {onAddTask && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAddTask}
-                  className="w-full mt-2"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Tambah Tugas
-                </Button>
-              )}
+              <div className="flex gap-2 mt-2">
+                {onAddTask && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleAddTask}
+                    className="flex-1"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Tambah Tugas
+                  </Button>
+                )}
+                {onDeleteSubject && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleDeleteSubject}
+                    className="px-3"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
