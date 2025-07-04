@@ -88,7 +88,7 @@ const Index = () => {
       const { data: userSubjectsData, error: userSubjectsError } = await supabase
         .from('user_subjects')
         .select('subject_id')
-        .eq('user_id', profile?.id);
+        .eq('user_id', profile?.user_id);
 
       if (userSubjectsError) throw userSubjectsError;
       setFollowedSubjects(userSubjectsData?.map(us => us.subject_id) || []);
@@ -198,7 +198,7 @@ const Index = () => {
         const { error } = await supabase
           .from('user_subjects')
           .delete()
-          .eq('user_id', profile?.id)
+          .eq('user_id', profile?.user_id)
           .eq('subject_id', subjectId);
 
         if (error) throw error;
@@ -214,7 +214,7 @@ const Index = () => {
         const { error } = await supabase
           .from('user_subjects')
           .insert({
-            user_id: profile?.id,
+            user_id: profile?.user_id,
             subject_id: subjectId
           });
 
