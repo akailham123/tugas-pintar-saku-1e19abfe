@@ -2,15 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, UserPlus, UserMinus, Plus, Trash2 } from "lucide-react";
-
-interface Subject {
-  id: string;
-  name: string;
-  code: string;
-  semester: string;
-  taskCount: number;
-  completedTasks: number;
-}
+import { Subject } from "@/types";
 
 interface SubjectCardProps {
   subject: Subject;
@@ -22,8 +14,8 @@ interface SubjectCardProps {
 }
 
 export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow, onAddTask, onDeleteSubject }: SubjectCardProps) => {
-  const completionPercentage = subject.taskCount > 0 
-    ? Math.round((subject.completedTasks / subject.taskCount) * 100) 
+  const completionPercentage = (subject.taskCount || 0) > 0 
+    ? Math.round(((subject.completedTasks || 0) / (subject.taskCount || 0)) * 100) 
     : 0;
 
   const handleCardClick = () => {
@@ -110,7 +102,7 @@ export const SubjectCard = ({ subject, onClick, isFollowed, onToggleFollow, onAd
                 />
               </div>
               <p className="text-xs text-gray-600">
-                {subject.completedTasks} dari {subject.taskCount} tugas selesai
+                {subject.completedTasks || 0} dari {subject.taskCount || 0} tugas selesai
               </p>
               
               <div className="flex gap-2 mt-2">
