@@ -20,7 +20,7 @@ export const useSubjectOperations = (
         const { error } = await supabase
           .from('user_subjects')
           .delete()
-          .eq('user_id', profile?.user_id)
+          .eq('user_id', profile?.id)
           .eq('subject_id', subjectId);
 
         if (error) throw error;
@@ -36,7 +36,7 @@ export const useSubjectOperations = (
         const { error } = await supabase
           .from('user_subjects')
           .insert({
-            user_id: profile?.user_id,
+            user_id: profile?.id,
             subject_id: subjectId
           });
 
@@ -70,7 +70,7 @@ export const useSubjectOperations = (
         .from('subjects')
         .insert({
           ...subjectData,
-          created_by: profile?.user_id
+          created_by: profile?.id
         })
         .select()
         .single();

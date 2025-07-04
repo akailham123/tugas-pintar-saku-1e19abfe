@@ -27,7 +27,7 @@ export const useAppData = () => {
       const { data: userSubjectsData, error: userSubjectsError } = await supabase
         .from('user_subjects')
         .select('subject_id')
-        .eq('user_id', profile?.user_id);
+        .eq('user_id', profile?.id);
 
       if (userSubjectsError) throw userSubjectsError;
       setFollowedSubjects(userSubjectsData?.map(us => us.subject_id) || []);

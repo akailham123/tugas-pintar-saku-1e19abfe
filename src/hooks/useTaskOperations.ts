@@ -93,8 +93,8 @@ export const useTaskOperations = (
           deadline: taskData.deadline.toISOString(),
           type: taskData.type,
           subject_id: subject.id,
-          user_id: profile?.user_id, // For now, assign to creator
-          created_by: profile?.user_id
+          user_id: profile?.id, // For now, assign to creator
+          created_by: profile?.id
         })
         .select('*, subjects:subject_id(*)')
         .single();
